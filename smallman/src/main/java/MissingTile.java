@@ -1,93 +1,78 @@
 public class MissingTile {
-  public static void tileGrid(Grid board) {
-    tilingHelper(board.size(), 0, 0, board.getPaintedCellX(), board.getPaintedCellY(), board);
-  }
 
-  // Recursively tile a size x size subgrid whose top-left corner is (topX, topY).
-  // The painted (already-occupied) cell within this subgrid is at (paintedX, paintedY).
-  static void tilingHelper(int size, int topX, int topY, int paintedX, int paintedY, Grid bd) {
-    // Base case: a 1x1 grid has only the painted cell, nothing to tile.
-    if (size == 1) return;
-
-    int half = size / 2;
-    int midX = topX + half; // x-coordinate where the right half starts
-    int midY = topY + half; // y-coordinate where the bottom half starts
-
-    // Determine which quadrant contains the painted cell.
-    // Quadrant layout (using compass-style naming matching the orientation encoding):
-    //   NW (top-left)  | NE (top-right)
-    //   ----------------+-----------------
-    //   SW (bottom-left)| SE (bottom-right)
-
-    // For each quadrant, we need a "painted cell". For the quadrant containing the
-    // actual painted cell, it keeps its painted cell. For the other three quadrants,
-    // we will place a triomino at the center to create a virtual painted cell in each.
-
-    // The center triomino's missing corner points toward the quadrant that already
-    // has a painted cell.
-
-    // Coordinates of the cell closest to the center in each quadrant:
-    int nwX = midX - 1, nwY = midY - 1; // bottom-right cell of NW quadrant
-    int neX = midX,     neY = midY - 1; // bottom-left cell of NE quadrant
-    int swX = midX - 1, swY = midY;     // top-right cell of SW quadrant
-    int seX = midX,     seY = midY;     // top-left cell of SE quadrant
-
-    // Determine which quadrant the painted cell is in
-    boolean paintedInNW = (paintedX < midX && paintedY < midY);
-    boolean paintedInNE = (paintedX >= midX && paintedY < midY);
-    boolean paintedInSW = (paintedX < midX && paintedY >= midY);
-    // paintedInSE is the remaining case
-
-    // Place a triomino at the center. The missing corner faces the quadrant
-    // that already has a painted cell.
-    // Orientation encoding: missing NE = 0, missing SE = 1, missing SW = 2, missing NW = 3
-    if (paintedInNW) {
-      // Missing corner = NW (orientation 3), placed at center with missing corner at (nwX, nwY)
-      bd.setTile(nwX, nwY, 3);
-    } else if (paintedInNE) {
-      // Missing corner = NE (orientation 0), placed at center with missing corner at (neX, neY)
-      bd.setTile(neX, neY, 0);
-    } else if (paintedInSW) {
-      // Missing corner = SW (orientation 2), placed at center with missing corner at (swX, swY)
-      bd.setTile(swX, swY, 2);
-    } else {
-      // Painted in SE: Missing corner = SE (orientation 1), placed at center with missing corner at (seX, seY)
-      bd.setTile(seX, seY, 1);
+    public static void tileGrid(Grid board) {
+        // Kick off the recursion using the grid's dimensions and painted cell
+        tilingHelper(board.size(), 0, 0, board.getPaintedCellX(), board.getPaintedCellY(), board);
     }
 
-    // Now determine the "painted cell" for each quadrant's recursive call.
-    // For the quadrant that already has the painted cell, use the actual painted cell.
-    // For the other three quadrants, the triomino just placed covers one of their center cells,
-    // making that cell the virtual "painted cell" for recursion.
+    /**
+     * A recursive helper method to tile a subgrid.
+     * * @param size The current width/height of the subgrid (a power of 2)
+     * @param topX The x-coordinate of the top-left corner of the subgrid
+     * @param topY The y-coordinate of the top-left corner of the subgrid
+     * @param paintedX The x-coordinate of the painted/occupied cell in this subgrid
+     * @param paintedY The y-coordinate of the painted/occupied cell in this subgrid
+     * @param board The main Grid reference
+     */
+    private static void tilingHelper(int size, int topX, int topY, int paintedX, int paintedY, Grid board) {
+        // Base Case: A 1x1 grid is fully "tiled" by its one painted cell
+        if (size == 1) {
+            return;
+        }
 
-    int pNW_X, pNW_Y, pNE_X, pNE_Y, pSW_X, pSW_Y, pSE_X, pSE_Y;
+        int half = size / 2;
+        int cx = topX + half; // Center X of the current subgrid
+        int cy = topY + half; // Center Y of the current subgrid
 
-    if (paintedInNW) {
-      pNW_X = paintedX; pNW_Y = paintedY;
-      pNE_X = neX;      pNE_Y = neY;
-      pSW_X = swX;      pSW_Y = swY;
-      pSE_X = seX;      pSE_Y = seY;
-    } else if (paintedInNE) {
-      pNW_X = nwX;      pNW_Y = nwY;
-      pNE_X = paintedX; pNE_Y = paintedY;
-      pSW_X = swX;      pSW_Y = swY;
-      pSE_X = seX;      pSE_Y = seY;
-    } else if (paintedInSW) {
-      pNW_X = nwX;      pNW_Y = nwY;
-      pNE_X = neX;      pNE_Y = neY;
-      pSW_X = paintedX; pSW_Y = paintedY;
-      pSE_X = seX;      pSE_Y = seY;
-    } else {
-      pNW_X = nwX;      pNW_Y = nwY;
-      pNE_X = neX;      pNE_Y = neY;
-      pSW_X = swX;      pSW_Y = swY;
-      pSE_X = paintedX; pSE_Y = paintedY;
+        // Calculate the central coordinates for the 4 interior corners 
+        // that touch the exact center of the current subgrid.
+        int nwCenterX = cx - 1, nwCenterY = cy - 1;
+        int neCenterX = cx,     neCenterY = cy - 1;
+        int swCenterX = cx - 1, swCenterY = cy;
+        int seCenterX = cx,     seCenterY = cy;
+
+        // Determine which quadrant contains the painted cell, place the central 
+        // tile to fill the *other* three quadrants, and then recursively tile all four.
+        
+        if (paintedX < cx && paintedY < cy) {
+            // Painted cell is in the North-West quadrant. 
+            // Place central tile missing the NW corner (Orientation 3)
+            board.setTile(nwCenterX, nwCenterY, 3);
+            
+            tilingHelper(half, topX, topY, paintedX, paintedY, board); // Recursively tile NW
+            tilingHelper(half, cx, topY, neCenterX, neCenterY, board); // Recursively tile NE
+            tilingHelper(half, topX, cy, swCenterX, swCenterY, board); // Recursively tile SW
+            tilingHelper(half, cx, cy, seCenterX, seCenterY, board);   // Recursively tile SE
+            
+        } else if (paintedX >= cx && paintedY < cy) {
+            // Painted cell is in the North-East quadrant.
+            // Place central tile missing the NE corner (Orientation 0)
+            board.setTile(neCenterX, neCenterY, 0);
+            
+            tilingHelper(half, topX, topY, nwCenterX, nwCenterY, board);
+            tilingHelper(half, cx, topY, paintedX, paintedY, board);     
+            tilingHelper(half, topX, cy, swCenterX, swCenterY, board);   
+            tilingHelper(half, cx, cy, seCenterX, seCenterY, board);     
+            
+        } else if (paintedX < cx && paintedY >= cy) {
+            // Painted cell is in the South-West quadrant.
+            // Place central tile missing the SW corner (Orientation 2)
+            board.setTile(swCenterX, swCenterY, 2);
+            
+            tilingHelper(half, topX, topY, nwCenterX, nwCenterY, board); 
+            tilingHelper(half, cx, topY, neCenterX, neCenterY, board);   
+            tilingHelper(half, topX, cy, paintedX, paintedY, board);     
+            tilingHelper(half, cx, cy, seCenterX, seCenterY, board);     
+            
+        } else {
+            // Painted cell is in the South-East quadrant.
+            // Place central tile missing the SE corner (Orientation 1)
+            board.setTile(seCenterX, seCenterY, 1);
+            
+            tilingHelper(half, topX, topY, nwCenterX, nwCenterY, board); 
+            tilingHelper(half, cx, topY, neCenterX, neCenterY, board);   
+            tilingHelper(half, topX, cy, swCenterX, swCenterY, board);   
+            tilingHelper(half, cx, cy, paintedX, paintedY, board);       
+        }
     }
-
-    // Recurse on each quadrant
-    tilingHelper(half, topX, topY,      pNW_X, pNW_Y, bd); // NW quadrant
-    tilingHelper(half, midX, topY,      pNE_X, pNE_Y, bd); // NE quadrant
-    tilingHelper(half, topX, midY,      pSW_X, pSW_Y, bd); // SW quadrant
-    tilingHelper(half, midX, midY,      pSE_X, pSE_Y, bd); // SE quadrant
-  }
 }
