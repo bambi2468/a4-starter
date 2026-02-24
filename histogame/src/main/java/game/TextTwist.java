@@ -141,7 +141,7 @@ public class TextTwist {
 
     public static void main(String[] args) {
         try {
-            TextTwistRef tt = new TextTwistRef("linuxwords.txt");
+            TextTwist tt = new TextTwist("linuxwords.txt");
             tt.runGame();
         } catch (FileNotFoundException e) {
             System.out.println("Dictionary file 'linuxwords.txt' not found.");
