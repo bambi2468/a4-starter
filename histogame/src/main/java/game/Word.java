@@ -60,4 +60,9 @@ public class Word implements Formable<Word>, Comparable<Word> {
         }
         return 1;
     }
+
+    public String getText() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getText'");
+    }
 }
